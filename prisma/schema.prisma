@@ -1,0 +1,201 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AssetStatus {
+  pending
+  validated
+  rejected
+  action_required
+}
+
+enum ListingType {
+  fixed
+  auction
+  swap
+}
+
+enum TokenizationType {
+  fractional
+  whole
+}
+
+enum TransactionType {
+  buy
+  sell
+  bid
+  tokenize
+}
+
+enum TransactionStatus {
+  pending
+  completed
+  failed
+  cancelled
+}
+
+enum PaymentMethodType {
+  crypto
+  fiat
+}
+
+enum BidStatus {
+  active
+  won
+  lost
+  cancelled
+}
+
+enum ValidationRequestType {
+  authenticity
+  condition
+  value
+}
+
+enum ValidationRequestStatus {
+  pending
+  approved
+  rejected
+}
+
+enum PaymentMethodRecordType {
+  crypto
+  card
+}
+
+model User {
+  id        String   @id
+  name      String
+  rating    Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ownedAssets        Asset[]               @relation("AssetOwner")
+  buyerTransactions  Transaction[]         @relation("TransactionBuyer")
+  sellerTransactions Transaction[]         @relation("TransactionSeller")
+  bids               Bid[]
+  validatorReviews   ValidatorReview[]
+  paymentMethods     PaymentMethodRecord[]
+}
+
+model Asset {
+  id               String           @id
+  title            String
+  description      String
+  category         String
+  status           AssetStatus      @default(pending)
+  imageUrl         String
+  images           String[]         @default([])
+  priceAmount      Float
+  priceCurrency    String           @default("USDT")
+  tokenizationType TokenizationType @default(whole)
+  totalTokens      Int              @default(1)
+  availableTokens  Int              @default(1)
+  pricePerToken    Float            @default(0)
+  listingType      ListingType      @default(fixed)
+  isVerified       Boolean          @default(false)
+  ownerId          String
+  owner            User             @relation("AssetOwner", fields: [ownerId], references: [id])
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  validatedAt      DateTime?
+  views            Int              @default(0)
+  likes            Int              @default(0)
+  value            Float
+  tokenId          String
+  auctionEndTime   DateTime?
+
+  bids               Bid[]
+  transactions       Transaction[]
+  validationRequests ValidationRequest[]
+}
+
+model Validator {
+  id                      String   @id
+  name                    String
+  expertise               String[]
+  jurisdiction            String
+  validationCount         Int      @default(0)
+  reputation              Float    @default(0)
+  avatar                  String
+  verificationFeeAmount   Float    @default(500)
+  verificationFeeCurrency String   @default("USD")
+  availability            Boolean  @default(true)
+  responseTime            String
+
+  validationRequests ValidationRequest[]
+  reviews            ValidatorReview[]
+}
+
+model Bid {
+  id        String    @id @default(uuid())
+  assetId   String
+  asset     Asset     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  bidderId  String
+  bidder    User      @relation(fields: [bidderId], references: [id])
+  amount    Float
+  currency  String    @default("USDT")
+  status    BidStatus @default(active)
+  createdAt DateTime  @default(now())
+}
+
+model Transaction {
+  id            String            @id @default(uuid())
+  type          TransactionType
+  status        TransactionStatus @default(pending)
+  assetId       String
+  asset         Asset             @relation(fields: [assetId], references: [id])
+  assetTitle    String
+  assetImageUrl String
+  amount        Float
+  currency      String            @default("USDT")
+  buyerId       String
+  buyer         User              @relation("TransactionBuyer", fields: [buyerId], references: [id])
+  sellerId      String
+  seller        User              @relation("TransactionSeller", fields: [sellerId], references: [id])
+  paymentMethod PaymentMethodType
+  timestamp     DateTime          @default(now())
+  hash          String?
+}
+
+model ValidationRequest {
+  id                    String                  @id @default(uuid())
+  assetId               String
+  asset                 Asset                   @relation(fields: [assetId], references: [id])
+  validatorId           String
+  validator             Validator               @relation(fields: [validatorId], references: [id])
+  requestType           ValidationRequestType
+  description           String
+  attachments           String[]                @default([])
+  status                ValidationRequestStatus @default(pending)
+  comments              String?
+  validationCertificate String?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+}
+
+model ValidatorReview {
+  id          String    @id @default(uuid())
+  validatorId String
+  validator   Validator @relation(fields: [validatorId], references: [id])
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  rating      Float
+  comment     String
+  createdAt   DateTime  @default(now())
+}
+
+model PaymentMethodRecord {
+  id        String                  @id @default(uuid())
+  userId    String
+  user      User                    @relation(fields: [userId], references: [id])
+  type      PaymentMethodRecordType
+  details   Json
+  createdAt DateTime                @default(now())
+}
