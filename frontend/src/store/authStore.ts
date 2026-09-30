@@ -222,9 +222,7 @@ export const useAuthStore = create<AuthState>()(
       
           const PHAROS_DEVNET_CHAIN_ID = 50002;
           const chainIdHex = '0x' + PHAROS_DEVNET_CHAIN_ID.toString(16);
-          // TEMPORARY BYPASS: The Pharos devnet RPC is currently rate-limiting or down.
-          // Commenting out the strict network switch requirement so you can at least connect your wallet and test the UI.
-          /*
+          
           if (Number(network.chainId) !== PHAROS_DEVNET_CHAIN_ID) {
             try {
               const rpcUrl = import.meta.env.VITE_PHAROS_RPC_URL || 'https://devnet.dplabs-internal.com';
@@ -268,10 +266,10 @@ export const useAuthStore = create<AuthState>()(
               }
             }
           }
-          */
       
           const accounts = await provider.send('eth_requestAccounts', []);
           const address = accounts[0];
+          
           const balance = await provider.getBalance(address);
           const formattedBalance = ethers.formatEther(balance);
       
