@@ -234,19 +234,30 @@ export const useAuthStore = create<AuthState>()(
                 throw new Error('Failed to switch to Pharos Devnet. Please switch manually.');
               }
             } catch (switchError) {
-              if ((switchError as any).code === 4902) {
-                await (window as any).ethereum.request({
-                  method: 'wallet_addEthereumChain',
-                  params: [
-                    {
-                      chainId: chainIdHex,
-                      chainName: 'Pharos Devnet',
-                      rpcUrls: ['https://devnet.dplabs-internal.com'],
-                      nativeCurrency: { name: 'Pharos', symbol: 'pharos', decimals: 18 },
-                      blockExplorerUrls: ['https://pharosscan.xyz'],
-                    },
-                  ],
-                });
+              const err = switchError as any;
+              if (err.code === 4902 || (err.message && err.message.includes('Unrecognized chain ID'))) {
+                try {
+                  await (window as any).ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [
+                      {
+                        chainId: chainIdHex,
+                        chainName: 'Pharos Devnet',
+                        rpcUrls: ['https://devnet.dplabs-internal.com'],
+                        nativeCurrency: { name: 'Pharos', symbol: 'pharos', decimals: 18 },
+                        blockExplorerUrls: ['https://pharosscan.xyz'],
+                      },
+                    ],
+                  });
+                } catch (addError) {
+                  const aErr = addError as any;
+                  if (aErr.code === -32002) {
+                    throw new Error('A request to add or switch the network is already pending. Please open MetaMask.');
+                  }
+                  throw new Error('Failed to add Pharos Devnet. The network RPC might be unreachable.');
+                }
+              } else if (err.code === -32002) {
+                throw new Error('A request to switch the network is already pending. Please open MetaMask.');
               } else {
                 throw new Error('Failed to switch to Pharos Devnet. Please switch manually.');
               }
