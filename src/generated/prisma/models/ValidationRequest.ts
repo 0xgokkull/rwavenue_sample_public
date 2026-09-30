@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/client"
+import type * as runtime from "@prisma/client/runtime/library"
 import type * as $Enums from "../enums.js"
 import type * as Prisma from "../internal/prismaNamespace.js"
 
@@ -196,7 +196,7 @@ export type ValidationRequestGroupByOutputType = {
   _max: ValidationRequestMaxAggregateOutputType | null
 }
 
-export type GetValidationRequestGroupByPayload<T extends ValidationRequestGroupByArgs> = Prisma.PrismaPromise<
+type GetValidationRequestGroupByPayload<T extends ValidationRequestGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<ValidationRequestGroupByOutputType, T['by']> &
       {
@@ -1499,11 +1499,6 @@ export type ValidationRequestFindManyArgs<ExtArgs extends runtime.Types.Extensio
    * Skip the first `n` ValidationRequests.
    */
   skip?: number
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-   * 
-   * Filter by unique combinations of ValidationRequests.
-   */
   distinct?: Prisma.ValidationRequestScalarFieldEnum | Prisma.ValidationRequestScalarFieldEnum[]
 }
 

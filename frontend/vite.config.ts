@@ -26,12 +26,7 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
     rollupOptions: {
-      output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['@headlessui/react', 'framer-motion', 'lucide-react'],
-        },
-      },
+      output: {},
     },
   },
 });

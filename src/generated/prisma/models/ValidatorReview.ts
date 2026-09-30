@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/client"
+import type * as runtime from "@prisma/client/runtime/library"
 import type * as $Enums from "../enums.js"
 import type * as Prisma from "../internal/prismaNamespace.js"
 
@@ -199,7 +199,7 @@ export type ValidatorReviewGroupByOutputType = {
   _max: ValidatorReviewMaxAggregateOutputType | null
 }
 
-export type GetValidatorReviewGroupByPayload<T extends ValidatorReviewGroupByArgs> = Prisma.PrismaPromise<
+type GetValidatorReviewGroupByPayload<T extends ValidatorReviewGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<ValidatorReviewGroupByOutputType, T['by']> &
       {
@@ -1327,11 +1327,6 @@ export type ValidatorReviewFindManyArgs<ExtArgs extends runtime.Types.Extensions
    * Skip the first `n` ValidatorReviews.
    */
   skip?: number
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-   * 
-   * Filter by unique combinations of ValidatorReviews.
-   */
   distinct?: Prisma.ValidatorReviewScalarFieldEnum | Prisma.ValidatorReviewScalarFieldEnum[]
 }
 

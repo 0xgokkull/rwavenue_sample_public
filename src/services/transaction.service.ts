@@ -211,13 +211,13 @@ export const transactionService = {
       },
     });
 
-    const completed = transactions.filter((transaction) => transaction.status === 'completed');
+    const completed = transactions.filter((transaction: any) => transaction.status === 'completed');
 
     return {
       totalTransactions: transactions.length,
       completedTransactions: completed.length,
-      totalVolume: completed.reduce((sum, transaction) => sum + transaction.amount, 0),
-      pendingTransactions: transactions.filter((transaction) => transaction.status === 'pending')
+      totalVolume: completed.reduce((sum: number, transaction: any) => sum + transaction.amount, 0),
+      pendingTransactions: transactions.filter((transaction: any) => transaction.status === 'pending')
         .length,
     };
   },

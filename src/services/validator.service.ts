@@ -66,7 +66,7 @@ export const validatorService = {
       select: { expertise: true },
     });
 
-    return Array.from(new Set(validators.flatMap((validator) => validator.expertise)));
+    return Array.from(new Set(validators.flatMap((validator: any) => validator.expertise)));
   },
 
   async getValidatorHistory(validatorId: string) {

@@ -217,19 +217,20 @@ export const useAuthStore = create<AuthState>()(
             throw new Error('Please install MetaMask or another Web3 wallet.');
           }
       
-          const provider = new ethers.providers.Web3Provider((window as any).ethereum);
+          const provider = new ethers.BrowserProvider((window as any).ethereum);
           let network = await provider.getNetwork();
       
           const PHAROS_DEVNET_CHAIN_ID = 50002;
-          if (network.chainId !== PHAROS_DEVNET_CHAIN_ID) {
+          const chainIdHex = '0x' + PHAROS_DEVNET_CHAIN_ID.toString(16);
+          if (Number(network.chainId) !== PHAROS_DEVNET_CHAIN_ID) {
             try {
               await (window as any).ethereum.request({
                 method: 'wallet_switchEthereumChain',
-                params: [{ chainId: ethers.utils.hexlify(PHAROS_DEVNET_CHAIN_ID) }],
+                params: [{ chainId: chainIdHex }],
               });
               await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for update
               network = await provider.getNetwork(); // Re-validate
-              if (network.chainId !== PHAROS_DEVNET_CHAIN_ID) {
+              if (Number(network.chainId) !== PHAROS_DEVNET_CHAIN_ID) {
                 throw new Error('Failed to switch to Pharos Devnet. Please switch manually.');
               }
             } catch (switchError) {
@@ -238,7 +239,7 @@ export const useAuthStore = create<AuthState>()(
                   method: 'wallet_addEthereumChain',
                   params: [
                     {
-                      chainId: ethers.utils.hexlify(PHAROS_DEVNET_CHAIN_ID),
+                      chainId: chainIdHex,
                       chainName: 'Pharos Devnet',
                       rpcUrls: ['https://devnet.dplabs-internal.com'],
                       nativeCurrency: { name: 'Pharos', symbol: 'pharos', decimals: 18 },
@@ -255,7 +256,7 @@ export const useAuthStore = create<AuthState>()(
           const accounts = await provider.send('eth_requestAccounts', []);
           const address = accounts[0];
           const balance = await provider.getBalance(address);
-          const formattedBalance = ethers.utils.formatEther(balance);
+          const formattedBalance = ethers.formatEther(balance);
       
           const userId = crypto.randomUUID();
           const newUser = {

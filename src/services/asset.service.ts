@@ -152,7 +152,7 @@ export const assetService = {
       orderBy: { category: 'asc' },
     });
 
-    return categories.map((item) => item.category);
+    return categories.map((item: any) => item.category);
   },
 
   async createAsset(payload: Partial<Asset>) {

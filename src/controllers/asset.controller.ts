@@ -64,9 +64,13 @@ export const assetController = {
   },
 
   async purchaseAsset(req: Request, res: Response) {
+    if (req.body.paymentMethod !== 'crypto' && req.body.paymentMethod !== 'fiat') {
+      return res.status(400).json({ error: 'Invalid payment method' });
+    }
     const transaction = await assetService.purchaseAsset(
       getParam(req.params.id),
       req.body.paymentMethod,
+      req.body.buyerId
     );
     if (!transaction) {
       return res.status(404).json({ message: 'Asset not found' });

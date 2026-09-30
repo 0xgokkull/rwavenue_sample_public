@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { FormData } from '@/pages/tokenize/TokenizePage';
+import type { FormData as CustomFormData } from '@/pages/tokenize/TokenizePage';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001/api';
 
@@ -40,7 +40,7 @@ const assetApi = {
   },
 
   // Create a new asset with metadata
-  createAsset: async (assetData: FormData): Promise<AssetCreationResponse> => {
+  createAsset: async (assetData: CustomFormData): Promise<AssetCreationResponse> => {
     // First upload images and documents to IPFS
     const [imageResults, documentResults] = await Promise.all([
       assetApi.uploadToIPFS(assetData.images),
@@ -62,6 +62,13 @@ const assetApi = {
     return response.data;
   },
 
+  // Get featured assets
+  getFeaturedAssets: async () => {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+    const response = await axios.get(`${API_URL}/assets/featured`);
+    return response.data;
+  },
+
   // Get asset details
   getAsset: async (assetId: string) => {
     const response = await axios.get(`${API_BASE_URL}/assets/${assetId}`);
@@ -75,7 +82,7 @@ const assetApi = {
   },
 
   // Update asset metadata
-  updateAsset: async (assetId: string, updateData: Partial<FormData>) => {
+  updateAsset: async (assetId: string, updateData: Partial<CustomFormData>) => {
     const response = await axios.patch(`${API_BASE_URL}/assets/${assetId}`, updateData);
     return response.data;
   },

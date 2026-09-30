@@ -8,7 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
-import type * as runtime from "@prisma/client/runtime/client"
+import type * as runtime from "@prisma/client/runtime/library"
 import type * as $Enums from "../enums.js"
 import type * as Prisma from "../internal/prismaNamespace.js"
 
@@ -206,7 +206,7 @@ export type BidGroupByOutputType = {
   _max: BidMaxAggregateOutputType | null
 }
 
-export type GetBidGroupByPayload<T extends BidGroupByArgs> = Prisma.PrismaPromise<
+type GetBidGroupByPayload<T extends BidGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<BidGroupByOutputType, T['by']> &
       {
@@ -1372,11 +1372,6 @@ export type BidFindManyArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
    * Skip the first `n` Bids.
    */
   skip?: number
-  /**
-   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-   * 
-   * Filter by unique combinations of Bids.
-   */
   distinct?: Prisma.BidScalarFieldEnum | Prisma.BidScalarFieldEnum[]
 }
 

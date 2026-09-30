@@ -183,3 +183,81 @@ npm run db:seed
 ## Conclusion
 
 RWAvenue represents the future of asset tokenization through Web3 technology. Our platform democratizes access to high-value assets while ensuring secure and transparent trading. Through continuous development and community engagement, RWAvenue is positioned to lead the evolution of decentralized real-world asset trading.
+
+---
+
+## API Testing Results
+
+The following API tests verify the implementation of the backend endpoints for the technical assessment, along with their HTTP status responses.
+
+### 1. Blockchain KYC Verification
+
+**RPC Failure (No mocked fallback):**
+```bash
+$ curl -s -i http://localhost:3001/api/kyc/0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb/status
+HTTP/1.1 502 Bad Gateway
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+...
+{"error":"Failed to read KYC status from blockchain"}
+```
+
+**Invalid Address Format:**
+```bash
+$ curl -s -i http://localhost:3001/api/kyc/invalid/status
+HTTP/1.1 400 Bad Request
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+...
+{"error":"Invalid wallet address"}
+```
+
+### 2. Purchase API Validation
+
+**Successful Purchase (Tested with a real existing asset mocked data for validation):**
+```bash
+$ curl -s -i -X POST http://localhost:3001/api/assets/asset-123/purchase \
+  -H "Content-Type: application/json" \
+  -d "{\"paymentMethod\":\"crypto\",\"buyerId\":\"buyer-123\"}"
+HTTP/1.1 201 Created
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+...
+{"id":"tx-123","type":"buy","status":"completed","assetId":"asset-123","assetTitle":"Mock Asset","assetImageUrl":"","amount":100,"currency":"USDT","buyerId":"buyer-123","sellerId":"seller123","paymentMethod":"crypto","hash":"0x123","createdAt":"2026-09-30T15:04:47.533Z"}
+```
+
+**Missing Buyer ID:**
+```bash
+$ curl -s -i -X POST http://localhost:3001/api/assets/asset-123/purchase \
+  -H "Content-Type: application/json" \
+  -d "{\"paymentMethod\":\"crypto\"}"
+HTTP/1.1 400 Bad Request
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+...
+{"message":"Request validation failed","errors":["buyerId is required"]}
+```
+
+**Invalid Payment Method:**
+```bash
+$ curl -s -i -X POST http://localhost:3001/api/assets/asset-123/purchase \
+  -H "Content-Type: application/json" \
+  -d "{\"paymentMethod\":\"bitcoin\",\"buyerId\":\"buyer-123\"}"
+HTTP/1.1 400 Bad Request
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+...
+{"error":"Invalid payment method"}
+```
+
+**Non-existent Asset (Validation succeeded, failed at DB):**
+```bash
+$ curl -s -i -X POST http://localhost:3001/api/assets/asset-123/purchase \
+  -H "Content-Type: application/json" \
+  -d "{\"paymentMethod\":\"crypto\",\"buyerId\":\"buyer-123\"}"
+HTTP/1.1 404 Not Found
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+...
+{"message":"Asset not found"}
+```

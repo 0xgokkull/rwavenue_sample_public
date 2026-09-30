@@ -5,6 +5,7 @@ import dashboardRoutes from './dashboard.routes.js';
 import validatorRoutes from './validator.routes.js';
 import validationRequestRoutes from './validationRequest.routes.js';
 import categoryRoutes from './category.routes.js';
+import kycRoutes from './kyc.routes.js';
 import { transactionRoutes, userRoutes } from './transaction.routes.js';
 
 const router = Router();
@@ -17,5 +18,6 @@ router.use('/validation-requests', validationRequestRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/transactions', transactionRoutes);
 router.use('/users', userRoutes);
+router.use('/kyc', kycRoutes);
 
 export default router;

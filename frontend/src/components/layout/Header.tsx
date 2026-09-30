@@ -59,6 +59,11 @@ export const Header = () => {
     if (isAuthenticated) {
       return (
         <div className="flex items-center gap-4">
+          {user?.wallet?.isConnected && user.wallet.address && (
+            <div className="px-3 py-1 bg-neutral-100 rounded-md text-sm font-medium text-neutral-700">
+              {user.wallet.address.slice(0, 6)}...{user.wallet.address.slice(-4)}
+            </div>
+          )}
           <Link
             to="/dashboard"
             className="text-sm text-neutral-600 hover:text-blue-600"

@@ -1,12 +1,55 @@
-import React from 'react';
-import { ArrowRight } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { AssetCard } from './AssetCard';
 import { Button } from './ui/Button';
-import { mockAssets } from '../data/mockData';
+import assetApi from '../api/assetApi';
+import { Asset } from '../types';
 
 export const FeaturedAssets = () => {
-  const featuredAssets = mockAssets.slice(0, 4);
+  const [featuredAssets, setFeaturedAssets] = useState<Asset[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadAssets = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await assetApi.getFeaturedAssets();
+        setFeaturedAssets(data.slice(0, 4));
+      } catch (err) {
+        setError('Failed to load featured assets');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadAssets();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="py-16 bg-neutral-50 flex justify-center items-center">
+        <Loader2 className="animate-spin text-blue-600" size={32} />
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="py-16 bg-neutral-50 flex justify-center items-center">
+        <div className="text-red-500">{error}</div>
+      </section>
+    );
+  }
+
+  if (featuredAssets.length === 0) {
+    return (
+      <section className="py-16 bg-neutral-50 flex justify-center items-center">
+        <div className="text-neutral-500">No featured assets found.</div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-16 bg-neutral-50">

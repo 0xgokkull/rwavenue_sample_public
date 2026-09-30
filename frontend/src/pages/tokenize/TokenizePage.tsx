@@ -9,7 +9,7 @@ import { useNotificationStore } from '@/store/notificationStore';
 import { mockValidators } from '@/data/mockData';
 import { toast } from 'react-hot-toast';
 
-interface FormData {
+export interface FormData {
   title: string;
   description: string;
   category: string;
