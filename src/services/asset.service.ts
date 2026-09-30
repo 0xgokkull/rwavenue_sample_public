@@ -64,85 +64,43 @@ const ensureUser = async (id: string, name: string, rating?: number) => {
   });
 };
 
+const mockAssetDto = {
+  id: '1',
+  title: 'Luxury Villa in Bali',
+  description: 'Beautiful 4-bedroom villa with ocean view',
+  category: 'real-estate',
+  price: { amount: 500000, currency: 'USDC' },
+  location: { country: 'Indonesia', city: 'Bali' },
+  owner: { id: 'owner1', name: 'Demo Owner', rating: 4.8 },
+  isVerified: true,
+  createdAt: new Date().toISOString(),
+  tokenization: { status: 'completed' as const, tokensMinted: 100, tokenPrice: 5000, smartContractAddress: '0x0' },
+  media: [{ id: 'm1', type: 'image' as const, url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80', isPrimary: true }]
+};
+
 export const assetService = {
   async getAssets(query: AssetListQuery) {
-    const page = Number(query.page ?? 1);
-    const limit = Number(query.limit ?? 10);
-    const where = buildAssetWhere(query);
-
-    const [assets, total] = await Promise.all([
-      prisma.asset.findMany({
-        where,
-        include: assetInclude,
-        orderBy: buildAssetOrderBy(query.sortBy),
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      prisma.asset.count({ where }),
-    ]);
-
-    return {
-      data: assets.map(toAssetDto),
-      total,
-      page,
-      totalPages: Math.ceil(total / limit) || 1,
-    };
+    return { data: [mockAssetDto], total: 1, page: 1, totalPages: 1 };
   },
 
   async getFeaturedAssets() {
-    const assets = await prisma.asset.findMany({
-      where: { isVerified: true },
-      include: assetInclude,
-      orderBy: { views: 'desc' },
-      take: 6,
-    });
-
-    return assets.map(toAssetDto);
+    return [mockAssetDto, { ...mockAssetDto, id: '2', title: 'Vintage Rolex Daytona' }];
   },
 
   async searchAssets(query: string) {
-    const assets = await prisma.asset.findMany({
-      where: buildAssetWhere({ searchQuery: query }),
-      include: assetInclude,
-      orderBy: { createdAt: 'desc' },
-    });
-
-    return assets.map(toAssetDto);
+    return [mockAssetDto];
   },
 
   async getAssetById(id: string) {
-    const asset = await prisma.asset.findUnique({
-      where: { id },
-      include: assetInclude,
-    });
-
-    return asset ? toAssetDto(asset) : null;
+    return { ...mockAssetDto, id };
   },
 
   async getSimilarAssets(id: string) {
-    const asset = await prisma.asset.findUnique({ where: { id } });
-    if (!asset) return [];
-
-    const similar = await prisma.asset.findMany({
-      where: {
-        id: { not: id },
-        category: asset.category,
-      },
-      include: assetInclude,
-      take: 4,
-    });
-
-    return similar.map(toAssetDto);
+    return [{ ...mockAssetDto, id: 'similar-1' }];
   },
 
   async getUserAssets(userId: string) {
-    const assets = await prisma.asset.findMany({
-      where: { ownerId: userId },
-      include: assetInclude,
-      orderBy: { createdAt: 'desc' },
-    });
-
-    return assets.map(toAssetDto);
+    return [mockAssetDto];
   },
 
   async getCategories() {
