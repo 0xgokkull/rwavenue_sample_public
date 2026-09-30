@@ -237,14 +237,15 @@ export const useAuthStore = create<AuthState>()(
               const err = switchError as any;
               if (err.code === 4902 || (err.message && err.message.includes('Unrecognized chain ID'))) {
                 try {
+                  const rpcUrl = import.meta.env.VITE_PHAROS_RPC_URL || 'https://devnet.dplabs-internal.com';
                   await (window as any).ethereum.request({
                     method: 'wallet_addEthereumChain',
                     params: [
                       {
                         chainId: chainIdHex,
                         chainName: 'Pharos Devnet',
-                        rpcUrls: ['https://devnet.dplabs-internal.com'],
-                        nativeCurrency: { name: 'Pharos', symbol: 'pharos', decimals: 18 },
+                        rpcUrls: [rpcUrl],
+                        nativeCurrency: { name: 'Pharos', symbol: 'PHAR', decimals: 18 },
                         blockExplorerUrls: ['https://pharosscan.xyz'],
                       },
                     ],
@@ -254,7 +255,7 @@ export const useAuthStore = create<AuthState>()(
                   if (aErr.code === -32002) {
                     throw new Error('A request to add or switch the network is already pending. Please open MetaMask.');
                   }
-                  throw new Error('Failed to add Pharos Devnet. The network RPC might be unreachable.');
+                  throw new Error(`Failed to add Pharos Devnet. The network RPC (${import.meta.env.VITE_PHAROS_RPC_URL || 'https://devnet.dplabs-internal.com'}) might be unreachable or rate-limiting.`);
                 }
               } else if (err.code === -32002) {
                 throw new Error('A request to switch the network is already pending. Please open MetaMask.');
