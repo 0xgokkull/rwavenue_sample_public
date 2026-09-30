@@ -60,8 +60,9 @@ export const Header = () => {
       return (
         <div className="flex items-center gap-4">
           {user?.wallet?.isConnected && user.wallet.address && (
-            <div className="px-3 py-1 bg-neutral-100 rounded-md text-sm font-medium text-neutral-700">
-              {user.wallet.address.slice(0, 6)}...{user.wallet.address.slice(-4)}
+            <div className="flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-200 rounded-md text-sm font-medium text-green-700">
+              <span className="w-2 h-2 rounded-full bg-green-500"></span>
+              <span>{user.wallet.address.slice(0, 6)}...{user.wallet.address.slice(-4)}</span>
             </div>
           )}
           <Link
