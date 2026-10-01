@@ -68,6 +68,7 @@ interface AuthState {
   updateKYCStatus: (status: KYCData['status']) => Promise<void>;
   toggleRole: (role: 'buyer' | 'seller', enabled: boolean) => Promise<void>;
   connectBankAccount: (accountDetails: any) => Promise<void>;
+  initializeWalletListeners: () => void;
   clearError: () => void; // Added clearError to the interface
 }
 
@@ -213,97 +214,168 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ loading: true, error: null });
       
-          if (!(window as any).ethereum) {
-            throw new Error('Please install MetaMask or another Web3 wallet.');
+          const ethereum = (window as any).ethereum;
+      
+          if (!ethereum) {
+            throw new Error("Please install MetaMask or another Web3 wallet.");
           }
       
-          const provider = new ethers.BrowserProvider((window as any).ethereum);
-          let network = await provider.getNetwork();
+          // Use MetaMask directly for the account request.
+          // This is the actual wallet connection step.
+          const accounts = await ethereum.request({
+            method: "eth_requestAccounts",
+          });
       
-          const PHAROS_DEVNET_CHAIN_ID = 50002;
-          const chainIdHex = '0x' + PHAROS_DEVNET_CHAIN_ID.toString(16);
-          
-          if (Number(network.chainId) !== PHAROS_DEVNET_CHAIN_ID) {
-            try {
-              const rpcUrl = import.meta.env.VITE_PHAROS_RPC_URL || 'https://devnet.dplabs-internal.com';
-              await (window as any).ethereum.request({
-                method: 'wallet_switchEthereumChain',
-                params: [{ chainId: chainIdHex }],
-              });
-              await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for update
-              network = await provider.getNetwork(); // Re-validate
-              if (Number(network.chainId) !== PHAROS_DEVNET_CHAIN_ID) {
-                throw new Error('Failed to switch to Pharos Devnet. Please switch manually.');
-              }
-            } catch (switchError) {
-              const err = switchError as any;
-              if (err.code === 4902 || (err.message && err.message.includes('Unrecognized chain ID'))) {
-                try {
-                  const rpcUrl = import.meta.env.VITE_PHAROS_RPC_URL || 'https://devnet.dplabs-internal.com';
-                  await (window as any).ethereum.request({
-                    method: 'wallet_addEthereumChain',
-                    params: [
-                      {
-                        chainId: chainIdHex,
-                        chainName: 'Pharos Devnet',
-                        rpcUrls: [rpcUrl],
-                        nativeCurrency: { name: 'Pharos', symbol: 'PHAR', decimals: 18 },
-                        blockExplorerUrls: ['https://pharosscan.xyz'],
-                      },
-                    ],
-                  });
-                } catch (addError) {
-                  const aErr = addError as any;
-                  if (aErr.code === -32002) {
-                    throw new Error('A request to add or switch the network is already pending. Please open MetaMask.');
-                  }
-                  throw new Error(`Failed to add Pharos Devnet. The network RPC (${import.meta.env.VITE_PHAROS_RPC_URL || 'https://devnet.dplabs-internal.com'}) might be unreachable or rate-limiting.`);
-                }
-              } else if (err.code === -32002) {
-                throw new Error('A request to switch the network is already pending. Please open MetaMask.');
-              } else {
-                throw new Error('Failed to switch to Pharos Devnet. Please switch manually.');
-              }
-            }
+          if (!accounts || accounts.length === 0) {
+            throw new Error("No wallet account selected.");
           }
       
-          const accounts = await provider.send('eth_requestAccounts', []);
           const address = accounts[0];
-          
-          const balance = await provider.getBalance(address);
-          const formattedBalance = ethers.formatEther(balance);
+      
+          // BrowserProvider for subsequent ethers operations.
+          const provider = new ethers.BrowserProvider(ethereum);
+      
+          // Get chain ID after the wallet has connected.
+          let chainId = 1;
+      
+          try {
+            const chainIdHex = await ethereum.request({
+              method: "eth_chainId",
+            });
+      
+            chainId = parseInt(chainIdHex, 16);
+          } catch (e) {
+            console.warn("Could not fetch network info:", e);
+          }
+      
+          // Balance is optional and must NOT determine connection success.
+          let formattedBalance = "0.0";
+      
+          try {
+            const balance = await provider.getBalance(address);
+            formattedBalance = ethers.formatEther(balance);
+          } catch (e) {
+            console.warn("Could not fetch balance:", e);
+          }
       
           const userId = crypto.randomUUID();
+      
           const newUser = {
             id: userId,
             wallet: {
               address,
               isConnected: true,
-              provider: 'metamask',
-              chainId: Number(network.chainId),
+              provider: "metamask",
+              chainId,
               balance: formattedBalance,
             },
-            roles: { isBuyer: true, isSeller: false },
-            stats: { totalPurchases: 0, totalSales: 0 },
+            roles: {
+              isBuyer: true,
+              isSeller: false,
+            },
+            stats: {
+              totalPurchases: 0,
+              totalSales: 0,
+            },
           };
       
-          (window as any).ethereum.on('accountsChanged', async (accounts: string[]) => {
-            if (accounts.length === 0) await get().disconnectWallet();
-            else if (get().user?.wallet?.address !== accounts[0]) await get().connectWallet();
+          set({
+            isAuthenticated: true,
+            user: newUser,
+            loading: false,
+            error: null,
           });
       
-          (window as any).ethereum.on('chainChanged', async () => await get().connectWallet());
-      
-          set({ isAuthenticated: true, user: newUser, loading: false });
         } catch (error) {
-          let errorMessage = 'Failed to connect wallet. Please try again.';
+          console.error("Wallet connection failed:", error);
+      
+          let errorMessage = "Failed to connect wallet. Please try again.";
+      
           if (error instanceof Error) {
-            if (error.message.includes('user rejected')) errorMessage = 'Wallet connection was rejected.';
-            else if (error.message.includes('MetaMask')) errorMessage = 'Please install MetaMask.';
-            else if (error.message.includes('switch')) errorMessage = 'Please switch to Pharos Devnet manually.';
+            if (
+              error.message.toLowerCase().includes("user rejected") ||
+              error.message.toLowerCase().includes("user denied")
+            ) {
+              errorMessage = "Wallet connection was rejected.";
+            } else if (error.message.toLowerCase().includes("already pending")) {
+              errorMessage =
+                "A wallet connection request is already pending in MetaMask. Please open MetaMask and complete or reject it.";
+            } else if (error.message.includes("MetaMask")) {
+              errorMessage = "Please install MetaMask.";
+            }
           }
-          set({ error: errorMessage, loading: false });
+      
+          set({
+            error: errorMessage,
+            loading: false,
+          });
         }
+      },
+
+      initializeWalletListeners: () => {
+        const ethereum = (window as any).ethereum;
+
+        if (!ethereum) return;
+
+        const handleAccountsChanged = async (accounts: string[]) => {
+          if (accounts.length === 0) {
+            await get().disconnectWallet();
+            return;
+          }
+
+          const currentAddress = get().user?.wallet?.address;
+
+          if (
+            currentAddress &&
+            currentAddress.toLowerCase() === accounts[0].toLowerCase()
+          ) {
+            return;
+          }
+
+          // Update the existing user instead of calling connectWallet()
+          // and creating another listener.
+          const currentUser = get().user;
+
+          if (currentUser) {
+            set({
+              user: {
+                ...currentUser,
+                wallet: {
+                  ...currentUser.wallet,
+                  address: accounts[0],
+                  isConnected: true,
+                },
+              },
+              isAuthenticated: true,
+            });
+          }
+        };
+
+        const handleChainChanged = async (chainIdHex: string) => {
+          const chainId = parseInt(chainIdHex, 16);
+
+          const currentUser = get().user;
+
+          if (currentUser) {
+            set({
+              user: {
+                ...currentUser,
+                wallet: {
+                  ...currentUser.wallet,
+                  chainId,
+                },
+              },
+            });
+          }
+        };
+
+        ethereum.on("accountsChanged", handleAccountsChanged);
+        ethereum.on("chainChanged", handleChainChanged);
+
+        return () => {
+          ethereum.removeListener("accountsChanged", handleAccountsChanged);
+          ethereum.removeListener("chainChanged", handleChainChanged);
+        };
       },
       
       disconnectWallet: async () => {

@@ -17,6 +17,8 @@ const CommunityPage = React.lazy(() => import('./pages/CommunityPage'));
 const AssetDetailPage = React.lazy(() => import('./pages/AssetDetailPage'));
 const MyAssetsPage = React.lazy(() => import('./pages/MyAssetsPage'));
 
+import { useAuthStore } from './store/authStore';
+
 // Loading component
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -28,6 +30,13 @@ const PageLoader = () => (
 );
 
 function App() {
+  React.useEffect(() => {
+    const cleanup = useAuthStore.getState().initializeWalletListeners();
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, []);
+
   return (
     <Router>
       <Suspense fallback={<PageLoader />}>

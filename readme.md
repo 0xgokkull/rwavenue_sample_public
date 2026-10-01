@@ -21,9 +21,9 @@ npm install
 npm run dev
 ```
 
-`npm install` installs both backend and frontend dependencies automatically. On first setup, configure environment variables in `.env` (root) and `frontend/.env` before running the app. See [Environment Variables](#environment-variables) below.
+`npm install` installs both backend and frontend dependencies automatically, and it also automatically generates the Prisma client. On first setup, configure environment variables in `.env` (root) and `frontend/.env` before running the app. See [Environment Variables](#environment-variables) below.
 
-This starts the **backend API** and **frontend dev server** at the same time.
+This starts the **backend API** and **frontend dev server** at the same time. Note: If the Prisma client is ever missing, `npm run dev` will now automatically regenerate it for you on startup to prevent fatal crashes.
 
 ### For Frontend Developers
 
